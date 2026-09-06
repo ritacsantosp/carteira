@@ -262,7 +262,7 @@
           if(remoto && remoto.compras){
             const rt = (remoto.compras||[]).length+(remoto.vendas||[]).length+(remoto.produtos||[]).length;
             const lt = DATA.compras.length+DATA.vendas.length+DATA.produtos.length;
-            if(rt>=lt){ DATA={compras:remoto.compras||[],vendas:remoto.vendas||[],perdas:remoto.perdas||[],caixaManual:remoto.caixaManual||[],produtos:remoto.produtos||[],pedidos:remoto.pedidos||[]}; await window.storage.set(STORE_KEY,JSON.stringify(DATA)); }
+            if(rt>=lt){ DATA={compras:remoto.compras||[],vendas:remoto.vendas||[],perdas:remoto.perdas||[],caixaManual:remoto.caixaManual||[],produtos:remoto.produtos||[],pedidos:remoto.pedidos||[]}; localStorage.setItem(STORE_KEY,JSON.stringify(DATA)); if(typeof window.storage!=='undefined'){await window.storage.set(STORE_KEY,JSON.stringify(DATA));} }
             else await vzDriveUpload();
           }
         } else await vzDriveUpload();
@@ -311,14 +311,25 @@ ${body}
 
   async function load(){
     try{
-      const r = await window.storage.get(STORE_KEY);
+      // Compatível com GitHub Pages (localStorage) e Claude artifacts (window.storage)
+      let r = null;
+      if(typeof window.storage !== 'undefined'){
+        r = await window.storage.get(STORE_KEY);
+      } else {
+        const raw = localStorage.getItem(STORE_KEY);
+        r = raw ? { value: raw } : null;
+      }
       if(r && r.value) DATA = JSON.parse(r.value);
     }catch(e){ /* no data yet */ }
     if(!DATA.produtos) DATA.produtos = [];
     if(!DATA.pedidos) DATA.pedidos = [];
   }
   async function save(){
-    try{ await window.storage.set(STORE_KEY, JSON.stringify(DATA)); }catch(e){ console.error('storage error', e); }
+    try{
+      const dataStr = JSON.stringify(DATA);
+      localStorage.setItem(STORE_KEY, dataStr);
+      if(typeof window.storage !== 'undefined'){ await window.storage.set(STORE_KEY, dataStr); }
+    }catch(e){ console.error('storage error', e); }
     tentarBackupAutomatico();
     if(vzDriveToken){ try{ vzDriveStatus='syncing'; await vzDriveUpload(); vzDriveStatus='synced'; vzDriveLastSync=new Date(); }catch(e){ vzDriveStatus='error'; } }
   }
