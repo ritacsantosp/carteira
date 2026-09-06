@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vizinhas foods &amp; Drinks — Gestão</title>
+<style>
+  :root{
+    --toldo:#0F3D2E;
+    --toldo-dark:#0A2B20;
+    --tomate:#C1272D;
+    --mostarda:#E8A33D;
+    --kraft:#FBF3E3;
+    --kraft-line:#E4D8BC;
+    --tinta:#1B1B1B;
+    --giz:#F4EFE0;
+    --font-display:'Kalam', cursive;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+  * { box-sizing: border-box; }
+  #vz-root {
+    font-family: var(--font-body);
+    color: var(--tinta);
+    background: var(--kraft);
+    min-height: 100%;
+    display: flex;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--kraft-line);
+  }
+
+  /* ---- SIDEBAR (capa do caderninho) ---- */
+  .vz-sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    background: var(--toldo);
+    background-image: repeating-linear-gradient(
+      90deg, var(--toldo) 0px, var(--toldo) 22px, var(--toldo-dark) 22px, var(--toldo-dark) 44px
+    );
+    color: var(--giz);
+    padding: 20px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .vz-logo {
+    width: 84px; height: 84px;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto 10px auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  .vz-brand {
+    text-align: center;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 2px dashed rgba(244,239,224,0.35);
+  }
+  .vz-brand-name {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 22px;
+    line-height: 1.15;
+  }
+  .vz-brand-sub {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    opacity: 0.7;
+    font-weight: 600;
+    margin-top: 6px;
+  }
+  .vz-nav-item {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 13px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display:flex; align-items:center; gap:8px;
+    opacity: 0.82;
+    transition: background 0.15s, opacity 0.15s;
+    min-height: 44px;
+  }
+  .vz-nav-item:hover { background: rgba(244,239,224,0.1); opacity:1; }
+  .vz-nav-item.active { background: var(--mostarda); color: var(--toldo-dark); opacity:1; }
+
+  /* ---- MAIN AREA (papel pautado) ---- */
+  .vz-main {
+    flex: 1;
+    padding: 22px 26px;
+    background:
+      linear-gradient(var(--kraft-line) 1px, transparent 1px);
+    background-size: 100% 34px;
+    background-color: var(--kraft);
+    overflow-y: auto;
+    max-height: 720px;
+  }
+  .vz-section-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    margin: 0 0 14px 0;
+    color: var(--toldo);
+  }
+
+  /* ---- CHALKBOARD (quadro do dia) ---- */
+  .vz-chalkboard {
+    background: var(--toldo-dark);
+    border: 10px solid #5c4326;
+    border-radius: 4px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.4);
+  }
+  .vz-chalk-title {
+    font-family: var(--font-display);
+    color: var(--giz);
+    font-size: 20px;
+    margin: 0 0 12px 0;
+    opacity: 0.9;
+  }
+  .vz-chalk-grid { display:flex; flex-wrap:wrap; gap: 22px; }
+  .vz-chalk-item { min-width: 140px; }
+  .vz-chalk-label { font-family: var(--font-body); color: rgba(244,239,224,0.6); font-size: 11px; text-transform:uppercase; letter-spacing:1px; }
+  .vz-chalk-value { font-family: var(--font-display); color: var(--giz); font-size: 26px; }
+  .vz-chalk-value.pos { color: #9BE39B; }
+  .vz-chalk-value.neg { color: #F1918F; }
+  .vz-alert-chalk { color: var(--mostarda); font-family: var(--font-mono); font-size: 12px; margin-top: 10px; padding-top:10px; border-top: 1px dashed rgba(244,239,224,0.25); }
+
+  /* ---- CARDS / FORMS ---- */
+  .vz-card {
+    background: #fff;
+    border: 1px solid var(--kraft-line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .vz-form-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; align-items:end; }
+  .vz-field label { display:block; font-size: 11px; font-weight:600; text-transform:uppercase; letter-spacing:0.4px; color:#6b6b6b; margin-bottom:4px;}
+  .vz-field input, .vz-field select {
+    width:100%; padding: 11px 10px; border:1px solid var(--kraft-line); border-radius:5px;
+    font-family: var(--font-body); font-size: 16px; background: var(--kraft);
+    min-height: 42px;
+  }
+  .vz-btn {
+    background: var(--tomate); color:#fff; border:none; border-radius:6px;
+    padding: 12px 18px; font-weight:700; font-size:14px; cursor:pointer;
+    font-family: var(--font-body); min-height: 44px;
+  }
+  .vz-btn:hover { filter: brightness(1.08); }
+  .vz-btn.secondary { background: var(--toldo); }
+
+  table.vz-table { width:100%; border-collapse: collapse; font-size: 13px; }
+  table.vz-table th {
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.4px;
+    color:#6b6b6b; padding: 6px 8px; border-bottom: 2px solid var(--kraft-line);
+  }
+  table.vz-table td { padding: 11px 8px; border-bottom: 1px solid var(--kraft-line); font-family: var(--font-mono); font-size:12.5px; }
+  table.vz-table tr:hover td { background: rgba(232,163,61,0.08); }
+  .vz-badge { padding:2px 7px; border-radius:10px; font-size:11px; font-weight:700; font-family:var(--font-body); }
+  .vz-badge.ok { background:#DCEEDC; color:#1F6B2C; }
+  .vz-badge.warn { background:#FBE1CE; color:var(--tomate); }
+  .vz-del { color:var(--tomate); cursor:pointer; font-weight:700; padding:8px 4px; display:inline-block; }
+  .vz-empty { color:#999; font-style:italic; padding: 10px 0; font-size:13px; }
+
+  .vz-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  @media (max-width: 720px) {
+    #vz-root { flex-direction: column; border-radius: 0; }
+    .vz-sidebar {
+      width: 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 12px 10px;
+      gap: 6px;
+    }
+    .vz-brand {
+      width: 100%;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      display:flex; align-items:center; justify-content:center; gap:10px;
+    }
+    .vz-brand br { display:none; }
+    .vz-logo { width: 48px; height: 48px; margin: 0; }
+    .vz-brand-sub { display:none; }
+    .vz-nav-item { flex: 1 1 auto; justify-content:center; text-align:center; font-size:13px; padding: 12px 8px; }
+    .vz-main { max-height: none; padding: 16px 14px; }
+    .vz-chalk-grid { gap: 14px; }
+    .vz-chalk-value { font-size: 22px; }
+    .vz-form-grid { grid-template-columns: 1fr; }
+    .vz-form-grid .vz-field button { width: 100%; }
+  }
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+<div id="vz-root">
+  <div class="vz-sidebar">
+    <div class="vz-brand"><img class="vz-logo" src="data:image/webp;base64,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" alt="Logo Vizinhas foods & Drinks"><div class="vz-brand-name">Vizinhas<br>foods &amp; Drinks</div><div class="vz-brand-sub">GESTÃO &amp; CONTROLADORIA</div></div>
+    <div class="vz-nav-item active" data-tab="dashboard">📋 Painel do dia</div>
+    <div class="vz-nav-item" data-tab="produtos">📦 Produtos</div>
+    <div class="vz-nav-item" data-tab="compras">🧺 Compras</div>
+    <div class="vz-nav-item" data-tab="vendas">🧾 Vendas &amp; CRM</div>
+    <div class="vz-nav-item" data-tab="pedidos">🛒 Pedidos</div>
+    <div class="vz-nav-item" data-tab="perdas">🗑️ Perdas</div>
+    <div class="vz-nav-item" data-tab="caixa">💰 Caixa</div>
+    <div class="vz-nav-item" data-tab="relatorios">📊 Relatórios</div>
+    <div class="vz-nav-item" data-tab="backup">💾 Backup</div>
+  </div>
+  <div class="vz-main" id="vz-main"></div>
+</div>
+
+<script>
+(function(){
+  const STORE_KEY = 'vizinhas_data_v1';
+
+  // ══════════════════════════════════════
+  // GOOGLE DRIVE CONFIG
+  // ══════════════════════════════════════
+  const DRIVE_CLIENT_ID = '997167985901-0cn6ejr077lfnd4erbg226f5moaiartu.apps.googleusercontent.com';
+  const DRIVE_FILE_NAME = 'vizinhas-foods-backup.json';
+  const DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+  let driveToken = null;
+  let driveFileId = localStorage.getItem('vzDriveFileId') || null;
+  let driveEmail = localStorage.getItem('vzDriveEmail') || null;
+  let driveStatus = 'off'; // off | syncing | synced | error
+  let driveLastSync = null;
+
+  async function driveSignIn(){
+    if(typeof google === 'undefined'){
+      alert('O script do Google ainda está carregando. Aguarde alguns segundos e tente novamente.');
+      return;
+    }
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: DRIVE_CLIENT_ID,
+      scope: DRIVE_SCOPES,
+      callback: async (res) => {
+        if(res.error){ driveStatus='error'; renderTab('backup'); return; }
+        driveToken = res.access_token;
+        try{
+          const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+driveToken}});
+          const d = await r.json();
+          driveEmail = d.email;
+          localStorage.setItem('vzDriveEmail', driveEmail);
+        }catch(e){}
+        driveStatus = 'syncing';
+        renderTab('backup');
+        await driveSyncNow();
+      }
+    });
+    client.requestAccessToken();
+  }
+
+  async function driveSyncNow(){
+    if(!driveToken){ driveStatus='off'; return; }
+    driveStatus = 'syncing';
+    try{
+      if(!driveFileId){
+        const search = await driveFetch(`https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}' and trashed=false&fields=files(id,name)`);
+        if(search.files && search.files.length > 0){
+          driveFileId = search.files[0].id;
+          localStorage.setItem('vzDriveFileId', driveFileId);
+          // Baixar dados do Drive
+          const remoto = await driveFetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`);
+          if(remoto && typeof remoto === 'object' && remoto.compras){
+            const remotoTotal = (remoto.compras||[]).length + (remoto.vendas||[]).length + (remoto.produtos||[]).length;
+            const localTotal = DATA.compras.length + DATA.vendas.length + DATA.produtos.length;
+            if(remotoTotal >= localTotal){
+              DATA = { compras:remoto.compras||[], vendas:remoto.vendas||[], perdas:remoto.perdas||[], caixaManual:remoto.caixaManual||[], produtos:remoto.produtos||[], pedidos:remoto.pedidos||[] };
+              await window.storage.set(STORE_KEY, JSON.stringify(DATA));
+            } else {
+              await driveUpload();
+            }
+          }
+        } else {
+          await driveUpload();
+        }
+      } else {
+        await driveUpload();
+      }
+      driveStatus = 'synced';
+      driveLastSync = new Date();
+    }catch(e){
+      console.error('Drive sync error:', e);
+      driveStatus = 'error';
+    }
+    renderTab('backup');
+  }
+
+  async function driveUpload(){
+    const body = JSON.stringify({...DATA, _syncedAt: new Date().toISOString()});
+    const meta = {name: DRIVE_FILE_NAME, mimeType: 'application/json'};
+    const boundary = '--vzbound';
+    const multipart = `--${boundary}
+Content-Type: application/json
+
+${JSON.stringify(meta)}
+--${boundary}
+Content-Type: application/json
+
+${body}
+--${boundary}--`;
+    const url = driveFileId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`
+      : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+    const method = driveFileId ? 'PATCH' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body: multipart
+    });
+    const d = await res.json();
+    if(d.id){ driveFileId = d.id; localStorage.setItem('vzDriveFileId', driveFileId); }
+  }
+
+  async function driveFetch(url){
+    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + driveToken } });
+    return res.json();
+  }
+
+  function driveSignOut(){
+    driveToken = null; driveFileId = null; driveEmail = null;
+    driveStatus = 'off'; driveLastSync = null;
+    localStorage.removeItem('vzDriveFileId');
+    localStorage.removeItem('vzDriveEmail');
+    renderTab('backup');
+  }
+
+  let DATA = { compras:[], vendas:[], perdas:[], caixaManual:[], produtos:[], pedidos:[] };
+  const $main = document.getElementById('vz-main');
+  const fmt = n => (isFinite(n)?n:0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const uid = () => Math.random().toString(36).slice(2,9);
+  const todayStr = () => new Date().toISOString().slice(0,10);
+
+  async function load(){
+    try{
+      const r = await window.storage.get(STORE_KEY);
+      if(r && r.value) DATA = JSON.parse(r.value);
+    }catch(e){ /* no data yet */ }
+    if(!DATA.produtos) DATA.produtos = [];
+    if(!DATA.pedidos) DATA.pedidos = [];
+  }
+  async function save(){
+    try{ await window.storage.set(STORE_KEY, JSON.stringify(DATA)); }catch(e){ console.error('storage error', e); }
+    tentarBackupAutomatico();
+    // Sincronizar com Drive se conectado
+    if(driveToken){ driveStatus='syncing'; try{ await driveUpload(); driveStatus='synced'; driveLastSync=new Date(); }catch(e){ driveStatus='error'; } }
+  }
+
+  // ---- Backup automático (Chrome/Edge no computador, via File System Access API) ----
+  const AUTO_BACKUP_SUPORTADO = 'showSaveFilePicker' in window;
+  let autoBackupHandle = null;
+  let autoBackupStatus = 'inativo'; // inativo | ativo | precisa_permissao
+
+  function abrirBackupDB(){
+    return new Promise((resolve, reject)=>{
+      const req = indexedDB.open('vizinhas_backup_db', 1);
+      req.onupgradeneeded = ()=> req.result.createObjectStore('handles');
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
+  }
+  async function salvarHandleNoDB(handle){
+    const db = await abrirBackupDB();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction('handles','readwrite');
+      tx.objectStore('handles').put(handle, 'backupFile');
+      tx.oncomplete = ()=> resolve();
+      tx.onerror = ()=> reject(tx.error);
+    });
+  }
+  async function lerHandleDoDB(){
+    const db = await abrirBackupDB();
+    return new Promise((resolve)=>{
+      const tx = db.transaction('handles','readonly');
+      const req = tx.objectStore('handles').get('backupFile');
+      req.onsuccess = ()=> resolve(req.result || null);
+      req.onerror = ()=> resolve(null);
+    });
+  }
+  async function apagarHandleDoDB(){
+    const db = await abrirBackupDB();
+    return new Promise((resolve)=>{
+      const tx = db.transaction('handles','readwrite');
+      tx.objectStore('handles').delete('backupFile');
+      tx.oncomplete = ()=> resolve();
+    });
+  }
+
+  async function inicializarAutoBackup(){
+    if(!AUTO_BACKUP_SUPORTADO) return;
+    try{
+      const handle = await lerHandleDoDB();
+      if(!handle){ autoBackupStatus = 'inativo'; return; }
+      const permissao = await handle.queryPermission({mode:'readwrite'});
+      if(permissao === 'granted'){
+        autoBackupHandle = handle;
+        autoBackupStatus = 'ativo';
+      } else {
+        autoBackupHandle = handle;
+        autoBackupStatus = 'precisa_permissao';
+      }
+    }catch(e){ autoBackupStatus = 'inativo'; }
+  }
+
+  async function ativarBackupAutomatico(){
+    if(!AUTO_BACKUP_SUPORTADO) return {ok:false, msg:'Seu navegador não tem suporte a esse recurso. Funciona no Chrome ou Edge do computador.'};
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'vizinhas_backup.json',
+        types: [{ description: 'Backup Vizinhas', accept: {'application/json': ['.json']} }]
+      });
+      const permissao = await handle.requestPermission({mode:'readwrite'});
+      if(permissao !== 'granted') return {ok:false, msg:'Permissão de escrita não concedida.'};
+      await salvarHandleNoDB(handle);
+      autoBackupHandle = handle;
+      autoBackupStatus = 'ativo';
+      await escreverBackupNoArquivo();
+      return {ok:true};
+    }catch(e){
+      if(e.name === 'AbortError') return {ok:false, msg:'Operação cancelada.'};
+      return {ok:false, msg:'Não foi possível ativar: ' + e.message};
+    }
+  }
+
+  async function reativarPermissao(){
+    if(!autoBackupHandle) return {ok:false, msg:'Nenhum arquivo configurado ainda.'};
+    try{
+      const permissao = await autoBackupHandle.requestPermission({mode:'readwrite'});
+      if(permissao === 'granted'){
+        autoBackupStatus = 'ativo';
+        await escreverBackupNoArquivo();
+        return {ok:true};
+      }
+      return {ok:false, msg:'Permissão não concedida.'};
+    }catch(e){ return {ok:false, msg:e.message}; }
+  }
+
+  async function desativarBackupAutomatico(){
+    await apagarHandleDoDB();
+    autoBackupHandle = null;
+    autoBackupStatus = 'inativo';
+  }
+
+  async function escreverBackupNoArquivo(){
+    if(!autoBackupHandle || autoBackupStatus !== 'ativo') return;
+    try{
+      const writable = await autoBackupHandle.createWritable();
+      await writable.write(JSON.stringify(DATA, null, 2));
+      await writable.close();
+    }catch(e){
+      console.error('falha ao escrever backup automático', e);
+      autoBackupStatus = 'precisa_permissao';
+    }
+  }
+
+  function tentarBackupAutomatico(){
+    if(autoBackupStatus === 'ativo'){ escreverBackupNoArquivo(); }
+  }
+
+  // ---- Cálculos de negócio ----
+  function custoMedio(produto){
+    const cs = DATA.compras.filter(c=>c.produto.toLowerCase()===produto.toLowerCase());
+    if(!cs.length) return 0;
+    const totQtd = cs.reduce((a,c)=>a+Number(c.quantidade),0);
+    const totVal = cs.reduce((a,c)=>a+Number(c.quantidade)*Number(c.preco),0);
+    return totQtd>0 ? totVal/totQtd : 0;
+  }
+  function taxaPerda(produto){
+    const perdida = DATA.perdas.filter(p=>p.produto.toLowerCase()===produto.toLowerCase()).reduce((a,p)=>a+Number(p.quantidade),0);
+    const comprada = DATA.compras.filter(c=>c.produto.toLowerCase()===produto.toLowerCase()).reduce((a,c)=>a+Number(c.quantidade),0);
+    return comprada>0 ? perdida/comprada : 0;
+  }
+  function produtosComAlerta(){
+    const produtos = [...new Set(DATA.compras.map(c=>c.produto))];
+    return produtos.filter(p=>taxaPerda(p) > 0.08);
+  }
+  function totalVendasHoje(){
+    return DATA.vendas.filter(v=>v.data===todayStr()).reduce((a,v)=>a+Number(v.quantidade)*Number(v.preco),0);
+  }
+  function totalComprasHoje(){
+    return DATA.compras.filter(c=>c.data===todayStr()).reduce((a,c)=>a+Number(c.quantidade)*Number(c.preco),0);
+  }
+  function lucroBrutoTotal(){
+    return DATA.vendas.reduce((a,v)=>{
+      const custo = custoMedio(v.produto);
+      return a + (Number(v.preco)-custo)*Number(v.quantidade);
+    },0);
+  }
+  function saldoCaixa(){
+    const entradasVendas = DATA.vendas.reduce((a,v)=>a+Number(v.quantidade)*Number(v.preco),0);
+    const saidasCompras = DATA.compras.reduce((a,c)=>a+Number(c.quantidade)*Number(c.preco),0);
+    const manual = DATA.caixaManual.reduce((a,m)=> m.tipo==='Entrada' ? a+Number(m.valor) : a-Number(m.valor), 0);
+    return entradasVendas - saidasCompras + manual;
+  }
+
+  // ---- Templates de tela ----
+  function renderDashboard(){
+    const alertas = produtosComAlerta();
+    return `
+      <div class="vz-chalkboard">
+        <div class="vz-chalk-title">☕ Quadro do dia — Vizinhas foods &amp; Drinks</div>
+        <div class="vz-chalk-grid">
+          <div class="vz-chalk-item"><div class="vz-chalk-label">Vendas hoje</div><div class="vz-chalk-value pos">R$ ${fmt(totalVendasHoje())}</div></div>
+          <div class="vz-chalk-item"><div class="vz-chalk-label">Compras hoje</div><div class="vz-chalk-value neg">R$ ${fmt(totalComprasHoje())}</div></div>
+          <div class="vz-chalk-item"><div class="vz-chalk-label">Lucro bruto acumulado</div><div class="vz-chalk-value">R$ ${fmt(lucroBrutoTotal())}</div></div>
+          <div class="vz-chalk-item"><div class="vz-chalk-label">Saldo em caixa</div><div class="vz-chalk-value ${saldoCaixa()>=0?'pos':'neg'}">R$ ${fmt(saldoCaixa())}</div></div>
+        </div>
+        ${alertas.length ? `<div class="vz-alert-chalk">⚠️ Alerta de perda alta (&gt;8%): ${alertas.join(', ')}</div>` : `<div class="vz-alert-chalk">✅ Nenhum produto com taxa de perda acima de 8%</div>`}
+      </div>
+      <div class="vz-card">
+        <h3 style="margin-top:0;font-size:15px;">Margem por produto</h3>
+        ${renderTabelaMargem()}
+      </div>
+    `;
+  }
+
+  function renderTabelaMargem(){
+    const produtos = [...new Set(DATA.vendas.map(v=>v.produto))];
+    if(!produtos.length) return `<div class="vz-empty">Nenhuma venda registrada ainda.</div>`;
+    let rows = produtos.map(p=>{
+      const vendasP = DATA.vendas.filter(v=>v.produto===p);
+      const qtd = vendasP.reduce((a,v)=>a+Number(v.quantidade),0);
+      const receita = vendasP.reduce((a,v)=>a+Number(v.quantidade)*Number(v.preco),0);
+      const custo = custoMedio(p)*qtd;
+      const lucro = receita-custo;
+      const margem = receita>0 ? (lucro/receita*100) : 0;
+      const perda = taxaPerda(p)*100;
+      return `<tr>
+        <td style="font-family:var(--font-body);font-weight:600;">${p}</td>
+        <td>${qtd}</td>
+        <td>R$ ${fmt(receita)}</td>
+        <td>R$ ${fmt(lucro)}</td>
+        <td>${fmt(margem)}%</td>
+        <td>${perda>8 ? `<span class="vz-badge warn">${fmt(perda)}% ⚠️</span>` : `<span class="vz-badge ok">${fmt(perda)}%</span>`}</td>
+      </tr>`;
+    }).join('');
+    return `<div class="vz-table-wrap"><table class="vz-table"><thead><tr><th>Produto</th><th>Qtd vendida</th><th>Receita</th><th>Lucro</th><th>Margem</th><th>Taxa perda</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  function estoqueAtual(nome){
+    const comprado = DATA.compras.filter(c=>c.produto.toLowerCase()===nome.toLowerCase()).reduce((a,c)=>a+Number(c.quantidade),0);
+    const vendido = DATA.vendas.filter(v=>v.produto.toLowerCase()===nome.toLowerCase()).reduce((a,v)=>a+Number(v.quantidade),0);
+    const perdido = DATA.perdas.filter(p=>p.produto.toLowerCase()===nome.toLowerCase()).reduce((a,p)=>a+Number(p.quantidade),0);
+    return comprado - vendido - perdido;
+  }
+
+  function renderProdutos(){
+    const rows = DATA.produtos.slice().reverse().map(p=>{
+      const est = estoqueAtual(p.nome);
+      const baixo = p.estoque_minimo!=='' && est < Number(p.estoque_minimo);
+      const pc = Number(p.preco_compra)||0;
+      const pv = Number(p.preco_venda)||0;
+      const margem = pv>0 ? ((pv-pc)/pv*100) : 0;
+      return `<tr>
+        <td style="font-family:var(--font-body);font-weight:600;">${p.nome}</td>
+        <td style="font-family:var(--font-body)">${p.categoria}</td>
+        <td style="font-family:var(--font-body)">${p.unidade}</td>
+        <td>R$ ${fmt(pc)}</td>
+        <td>R$ ${fmt(pv)}</td>
+        <td>${pv>0 ? `<span class="vz-badge ${margem>=0?'ok':'warn'}">${fmt(margem)}%</span>` : '-'}</td>
+        <td>${p.estoque_minimo || '-'}</td>
+        <td>${baixo ? `<span class="vz-badge warn">${fmt(est)} ⚠️ baixo</span>` : `<span class="vz-badge ok">${fmt(est)}</span>`}</td>
+        <td><span class="vz-del" data-del="produtos" data-id="${p.id}">excluir</span></td>
+      </tr>`;
+    }).join('');
+    return `
+      <h2 class="vz-section-title">📦 Cadastro de Produtos</h2>
+      <div class="vz-card">
+        <div class="vz-form-grid">
+          <div class="vz-field"><label>Nome do produto</label><input type="text" id="pr-nome" placeholder="Ex: Geladão morango"></div>
+          <div class="vz-field"><label>Categoria</label><select id="pr-categoria"><option>Comida</option><option>Bebida</option><option>Insumo/Embalagem</option></select></div>
+          <div class="vz-field"><label>Unidade de medida</label><select id="pr-unidade"><option>un</option><option>kg</option><option>litro</option><option>pacote</option></select></div>
+          <div class="vz-field"><label>Valor pago (custo)</label><input type="number" id="pr-preco-compra" min="0" step="0.01" placeholder="R$"></div>
+          <div class="vz-field"><label>Valor de venda</label><input type="number" id="pr-preco-venda" min="0" step="0.01" placeholder="R$"></div>
+          <div class="vz-field"><label>Estoque mínimo (opcional)</label><input type="number" id="pr-estoque-min" min="0" step="0.01"></div>
+          <div class="vz-field"><button class="vz-btn" id="pr-add">Cadastrar produto</button></div>
+        </div>
+      </div>
+      <div class="vz-card">
+        <div class="vz-table-wrap"><table class="vz-table"><thead><tr><th>Produto</th><th>Categoria</th><th>Unidade</th><th>Valor pago</th><th>Valor venda</th><th>Margem</th><th>Estoque mín.</th><th>Estoque atual*</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="9" class="vz-empty">Nenhum produto cadastrado ainda.</td></tr>'}</tbody></table></div>
+        <div style="font-size:11px;color:#999;margin-top:8px;">*Estoque atual = total comprado − total vendido − total perdido, calculado pelos lançamentos registrados. O valor pago/venda aqui é a referência padrão — cada compra ou venda pode ter preço diferente na hora do lançamento.</div>
+      </div>`;
+  }
+
+  function renderCompras(){
+    const rows = DATA.compras.slice().reverse().map(c=>`
+      <tr>
+        <td>${c.data}</td><td style="font-family:var(--font-body)">${c.produto}</td>
+        <td>${c.quantidade}</td><td>R$ ${fmt(c.preco)}</td>
+        <td>R$ ${fmt(c.quantidade*c.preco)}</td>
+        <td style="font-family:var(--font-body)">${c.fornecedor||'-'}</td>
+        <td><span class="vz-del" data-del="compras" data-id="${c.id}">excluir</span></td>
+      </tr>`).join('');
+    return `
+      <h2 class="vz-section-title">🧺 Compras</h2>
+      <div class="vz-card">
+        <div class="vz-form-grid">
+          <div class="vz-field"><label>Data</label><input type="date" id="c-data" value="${todayStr()}"></div>
+          <div class="vz-field"><label>Item / produto</label><input type="text" id="c-produto" list="produtos-list" placeholder="Ex: Copo 300ml"></div>
+          <div class="vz-field"><label>Quantidade</label><input type="number" id="c-qtd" min="0" step="0.01"></div>
+          <div class="vz-field"><label>Preço unitário (R$)</label><input type="number" id="c-preco" min="0" step="0.01"></div>
+          <div class="vz-field"><label>Fornecedor</label><input type="text" id="c-fornecedor" placeholder="Opcional"></div>
+          <div class="vz-field"><button class="vz-btn" id="c-add">Adicionar compra</button></div>
+        </div>
+      </div>
+      <div class="vz-card">
+        <div class="vz-table-wrap"><table class="vz-table"><thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Preço unit.</th><th>Total</th><th>Fornecedor</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="7" class="vz-empty">Nenhuma compra registrada.</td></tr>'}</tbody></table></div>
+      </div>
+      ${produtosDatalist()}`;
+  }
+
+  function produtosDatalist(){
+    return `<datalist id="produtos-list">${DATA.produtos.map(p=>`<option value="${p.nome}">`).join('')}</datalist>`;
+  }
+
+  function renderVendas(){
+    const rows = DATA.vendas.slice().reverse().map(v=>`
+      <tr>
+        <td>${v.data}</td><td style="font-family:var(--font-body)">${v.produto}</td>
+        <td>${v.quantidade}</td><td>R$ ${fmt(v.preco)}</td>
+        <td>R$ ${fmt(v.quantidade*v.preco)}</td>
+        <td style="font-family:var(--font-body)">${v.forma_pagamento}</td>
+        <td style="font-family:var(--font-body)">${v.cliente||'-'}</td>
+        <td style="font-family:var(--font-body)">${v.telefone||'-'}</td>
+        <td><span class="vz-del" data-del="vendas" data-id="${v.id}">excluir</span></td>
+      </tr>`).join('');
+    return `
+      <h2 class="vz-section-title">🧾 Vendas &amp; CRM</h2>
+      <div class="vz-card">
+        <div class="vz-form-grid">
+          <div class="vz-field"><label>Data</label><input type="date" id="v-data" value="${todayStr()}"></div>
+          <div class="vz-field"><label>Item / produto</label><input type="text" id="v-produto" list="produtos-list" placeholder="Ex: Geladão morango"></div>
+          <div class="vz-field"><label>Quantidade</label><input type="number" id="v-qtd" min="0" step="0.01"></div>
+          <div class="vz-field"><label>Preço de venda (R$)</label><input type="number" id="v-preco" min="0" step="0.01"></div>
+          <div class="vz-field"><label>Forma de pagamento</label>
+            <select id="v-pagamento"><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Fiado</option></select>
+          </div>
+          <div class="vz-field"><label>Cliente</label><input type="text" id="v-cliente" placeholder="Opcional"></div>
+          <div class="vz-field"><label>Telefone</label><input type="text" id="v-telefone" placeholder="Opcional"></div>
+          <div class="vz-field"><label>Endereço</label><input type="text" id="v-endereco" placeholder="Opcional"></div>
+          <div class="vz-field"><button class="vz-btn" id="v-add">Adicionar venda</button></div>
+        </div>
+      </div>
+      <div class="vz-card">
+        <div class="vz-table-wrap"><table class="vz-table"><thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Preço</th><th>Total</th><th>Pagto</th><th>Cliente</th><th>Tel.</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="9" class="vz-empty">Nenhuma venda registrada.</td></tr>'}</tbody></table></div>
+      </div>
+      ${produtosDatalist()}`;
+  }
+
+  let pedidoEmEdicao = { itens: [] };
+
+  function statusBadge(status){
+    const cls = status==='Pago' ? 'ok' : 'warn';
+    return `<span class="vz-badge ${cls}">${status}</span>`;
+  }
+
+  function renderPedidos(){
+    const rows = DATA.pedidos.slice().reverse().map(ped=>{
+      const total = ped.itens.reduce((a,i)=>a+Number(i.quantidade)*Number(i.preco),0);
+      const itensList = ped.itens.map(i=>`${i.quantidade}x ${i.produto}`).join('<br>');
+      return `<tr>
+        <td>${ped.data}</td>
+        <td style="font-family:var(--font-body);font-weight:600;">${ped.cliente||'-'}</td>
+        <td style="font-family:var(--font-body)">${ped.telefone||'-'}</td>
+        <td style="font-family:var(--font-body);font-size:11.5px;">${itensList}</td>
+        <td>R$ ${fmt(total)}</td>
+        <td style="font-family:var(--font-body)">${ped.forma_pagamento}</td>
+        <td>${statusBadge(ped.status)}</td>
+        <td><span class="vz-del" data-del-pedido="${ped.id}">excluir</span></td>
+      </tr>`;
+    }).join('');
+
+    const itensTempRows = pedidoEmEdicao.itens.map((it,idx)=>`
+      <tr><td style="font-family:var(--font-body)">${it.produto}</td><td>${it.quantidade}</td><td>R$ ${fmt(it.preco)}</td><td>R$ ${fmt(it.quantidade*it.preco)}</td>
+      <td><span class="vz-del" data-rm-item="${idx}">remover</span></td></tr>`).join('');
+    const totalTemp = pedidoEmEdicao.itens.reduce((a,i)=>a+Number(i.quantidade)*Number(i.preco),0);
+
+    const pagamentos = ['Pix','Dinheiro','Cartão','Fiado'];
+    const statusOpts = ['Em aberto','Entregue','Pago'];
+
+    return `
+      <h2 class="vz-section-title">🛒 Pedidos por Cliente</h2>
+      <div class="vz-card">
+        <h3 style="margin-top:0;font-size:14px;">Dados do pedido</h3>
+        <div class="vz-form-grid">
+          <div class="vz-field"><label>Data</label><input type="date" id="ped-data" value="${pedidoEmEdicao.data||todayStr()}"></div>
+          <div class="vz-field"><label>Cliente</label><input type="text" id="ped-cliente" value="${pedidoEmEdicao.cliente||''}" placeholder="Nome do cliente"></div>
+          <div class="vz-field"><label>Telefone</label><input type="text" id="ped-telefone" value="${pedidoEmEdicao.telefone||''}"></div>
+          <div class="vz-field"><label>Endereço</label><input type="text" id="ped-endereco" value="${pedidoEmEdicao.endereco||''}"></div>
+          <div class="vz-field"><label>Forma de pagamento</label><select id="ped-pagamento">${pagamentos.map(o=>`<option ${pedidoEmEdicao.forma_pagamento===o?'selected':''}>${o}</option>`).join('')}</select></div>
+          <div class="vz-field"><label>Status</label><select id="ped-status">${statusOpts.map(o=>`<option ${pedidoEmEdicao.status===o?'selected':''}>${o}</option>`).join('')}</select></div>
+        </div>
+      </div>
+
+      <div class="vz-card">
+        <h3 style="margin-top:0;font-size:14px;">Itens do pedido</h3>
+        <div class="vz-form-grid">
+          <div class="vz-field"><label>Produto</label><input type="text" id="ped-item-produto" list="produtos-list"></div>
+          <div class="vz-field"><label>Quantidade</label><input type="number" id="ped-item-qtd" min="0" step="0.01"></div>
+          <div class="vz-field"><label>Preço unit.</label><input type="number" id="ped-item-preco" min="0" step="0.01"></div>
+          <div class="vz-field"><button class="vz-btn secondary" id="ped-item-add">+ Adicionar item</button></div>
+        </div>
+        ${pedidoEmEdicao.itens.length ? `
+        <div class="vz-table-wrap" style="margin-top:14px;"><table class="vz-table"><thead><tr><th>Produto</th><th>Qtd</th><th>Preço</th><th>Subtotal</th><th></th></tr></thead><tbody>${itensTempRows}</tbody></table></div>
+        <div style="text-align:right;font-family:var(--font-mono);font-weight:700;margin-top:10px;font-size:15px;">Total do pedido: R$ ${fmt(totalTemp)}</div>
+        <button class="vz-btn" id="ped-salvar" style="margin-top:10px;">✅ Salvar pedido</button>
+        ` : `<div class="vz-empty" style="margin-top:10px;">Adicione ao menos um item para salvar o pedido.</div>`}
+      </div>
+
+      <div class="vz-card">
+        <h3 style="margin-top:0;font-size:14px;">Pedidos registrados</h3>
+        <div class="vz-table-wrap"><table class="vz-table"><thead><tr><th>Data</th><th>Cliente</th><th>Tel.</th><th>Itens</th><th>Total</th><th>Pagto</th><th>Status</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="8" class="vz-empty">Nenhum pedido registrado ainda.</td></tr>'}</tbody></table></div>
+      </div>
+      ${produtosDatalist()}`;
+  }
+
+  function renderPerdas(){
+    const rows = DATA.perdas.slice().reverse().map(p=>{
+      const custo = custoMedio(p.produto)*Number(p.quantidade);
+      return `<tr>
+        <td>${p.data}</td><td style="font-family:var(--font-body)">${p.produto}</td>
+        <td>${p.quantidade}</td><td style="font-family:var(--font-body)">${p.motivo}</td>
+        <td>R$ ${fmt(custo)}</td>
+        <td><span class="vz-del" data-del="perdas" data-id="${p.id}">excluir</span></td>
+      </tr>`;
+    }).join('');
+    return `
+      <h2 class="vz-section-title">🗑️ Perdas &amp; Desperdício</h2>
+      <div class="vz-card">
+        <div class="vz-form-grid">
+          <div class="vz-field"><label>Data</label><input type="date" id="p-data" value="${todayStr()}"></div>
+          <div class="vz-field"><label>Item / produto</label><input type="text" id="p-produto" list="produtos-list"></div>
+          <div class="vz-field"><label>Quantidade perdida</label><input type="number" id="p-qtd" min="0" step="0.01"></div>
+          <div class="vz-field"><label>Motivo</label>
+            <select id="p-motivo"><option>Validade vencida</option><option>Quebra/dano</option><option>Erro de produção</option><option>Outro</option></select>
+          </div>
+          <div class="vz-field"><button class="vz-btn" id="p-add">Registrar perda</button></div>
+        </div>
+      </div>
+      <div class="vz-card">
+        <div class="vz-table-wrap"><table class="vz-table"><thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Motivo</th><th>Custo estimado</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="6" class="vz-empty">Nenhuma perda registrada.</td></tr>'}</tbody></table></div>
+      </div>
+      ${produtosDatalist()}`;
+  }
+
+  function renderCaixa(){
+    const rows = DATA.caixaManual.slice().reverse().map(m=>`
+      <tr><td>${m.data}</td><td>${m.tipo}</td><td style="font-family:var(--font-body)">${m.origem}</td>
+      <td>R$ ${fmt(m.valor)}</td>
+      <td><span class="vz-del" data-del="caixaManual" data-id="${m.id}">excluir</span></td></tr>`).join('');
+    return `
+      <h2 class="vz-section-title">💰 Caixa</h2>
+      <div class="vz-card">
+        <div class="vz-chalk-label" style="color:#6b6b6b">Saldo atual (vendas − compras + lançamentos manuais)</div>
+        <div style="font-family:var(--font-mono);font-size:28px;font-weight:600;color:${saldoCaixa()>=0?'#1F6B2C':'var(--tomate)'}">R$ ${fmt(saldoCaixa())}</div>
+      </div>
+      <div class="vz-card">
+        <h3 style="margin-top:0;font-size:14px;">Lançamento manual (aporte, retirada, etc.)</h3>
+        <div class="vz-form-grid">
+          <div class="vz-field"><label>Data</label><input type="date" id="m-data" value="${todayStr()}"></div>
+          <div class="vz-field"><label>Tipo</label><select id="m-tipo"><option>Entrada</option><option>Saída</option></select></div>
+          <div class="vz-field"><label>Origem</label><input type="text" id="m-origem" placeholder="Ex: Aporte sócio"></div>
+          <div class="vz-field"><label>Valor (R$)</label><input type="number" id="m-valor" min="0" step="0.01"></div>
+          <div class="vz-field"><button class="vz-btn" id="m-add">Lançar</button></div>
+        </div>
+      </div>
+      <div class="vz-card">
+        <div class="vz-table-wrap"><table class="vz-table"><thead><tr><th>Data</th><th>Tipo</th><th>Origem</th><th>Valor</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="5" class="vz-empty">Nenhum lançamento manual.</td></tr>'}</tbody></table></div>
+      </div>`;
+  }
+
+  let relatorioPeriodo = { inicio: todayStr().slice(0,8)+'01', fim: todayStr() };
+
+  function noPeriodo(data){ return data >= relatorioPeriodo.inicio && data <= relatorioPeriodo.fim; }
+
+  function renderRelatorios(){
+    const vendasP = DATA.vendas.filter(v=>noPeriodo(v.data));
+    const comprasP = DATA.compras.filter(c=>noPeriodo(c.data));
+    const perdasP = DATA.perdas.filter(p=>noPeriodo(p.data));
+
+    const receitaTotal = vendasP.reduce((a,v)=>a+Number(v.quantidade)*Number(v.preco),0);
+    const custoVendidoTotal = vendasP.reduce((a,v)=>a+custoMedio(v.produto)*Number(v.quantidade),0);
+    const lucroPeriodo = receitaTotal - custoVendidoTotal;
+    const margemPeriodo = receitaTotal>0 ? (lucroPeriodo/receitaTotal*100) : 0;
+
+    const comprasTotal = comprasP.reduce((a,c)=>a+Number(c.quantidade)*Number(c.preco),0);
+    const perdasTotalCusto = perdasP.reduce((a,p)=>a+custoMedio(p.produto)*Number(p.quantidade),0);
+
+    const linhasGanhos = vendasP.map(v=>{
+      const custo = custoMedio(v.produto)*Number(v.quantidade);
+      const receita = Number(v.quantidade)*Number(v.preco);
+      const lucro = receita-custo;
+      return `<tr><td>${v.data}</td><td style="font-family:var(--font-body)">${v.produto}</td><td>${v.quantidade}</td><td>R$ ${fmt(receita)}</td><td>R$ ${fmt(custo)}</td><td>R$ ${fmt(lucro)}</td><td>${receita>0?fmt(lucro/receita*100):'0,00'}%</td></tr>`;
+    }).join('');
+
+    const linhasCompras = comprasP.map(c=>`<tr><td>${c.data}</td><td style="font-family:var(--font-body)">${c.produto}</td><td>${c.quantidade}</td><td>R$ ${fmt(c.preco)}</td><td>R$ ${fmt(c.quantidade*c.preco)}</td><td style="font-family:var(--font-body)">${c.fornecedor||'-'}</td></tr>`).join('');
+
+    const linhasPerdas = perdasP.map(p=>`<tr><td>${p.data}</td><td style="font-family:var(--font-body)">${p.produto}</td><td>${p.quantidade}</td><td style="font-family:var(--font-body)">${p.motivo}</td><td>R$ ${fmt(custoMedio(p.produto)*Number(p.quantidade))}</td></tr>`).join('');
+
+    return `
+      <h2 class="vz-section-title">📊 Relatórios</h2>
+      <div class="vz-card">
+        <div class="vz-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px,180px));">
+          <div class="vz-field"><label>De</label><input type="date" id="r-inicio" value="${relatorioPeriodo.inicio}"></div>
+          <div class="vz-field"><label>Até</label><input type="date" id="r-fim" value="${relatorioPeriodo.fim}"></div>
+          <div class="vz-field"><button class="vz-btn secondary" id="r-filtrar">Atualizar período</button></div>
+        </div>
+      </div>
+
+      <div class="vz-chalkboard">
+        <div class="vz-chalk-title">Resumo do período</div>
+        <div class="vz-chalk-grid">
+          <div class="vz-chalk-item"><div class="vz-chalk-label">Receita de vendas</div><div class="vz-chalk-value pos">R$ ${fmt(receitaTotal)}</div></div>
+          <div class="vz-chalk-item"><div class="vz-chalk-label">Total de compras</div><div class="vz-chalk-value neg">R$ ${fmt(comprasTotal)}</div></div>
+          <div class="vz-chalk-item"><div class="vz-chalk-label">Lucro bruto</div><div class="vz-chalk-value">R$ ${fmt(lucroPeriodo)}</div></div>
+          <div class="vz-chalk-item"><div class="vz-chalk-label">Margem média</div><div class="vz-chalk-value">${fmt(margemPeriodo)}%</div></div>
+          <div class="vz-chalk-item"><div class="vz-chalk-label">Custo de perdas</div><div class="vz-chalk-value neg">R$ ${fmt(perdasTotalCusto)}</div></div>
+        </div>
+      </div>
+
+      <div class="vz-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="margin:0;font-size:15px;">💰 Relatório de Ganhos</h3>
+          <div style="display:flex;gap:8px;">
+            <button class="vz-btn secondary" data-print="ganhos">🖨️ Imprimir/PDF</button>
+            <button class="vz-btn" data-export="ganhos">Exportar CSV</button>
+          </div>
+        </div>
+        <div class="vz-table-wrap"><table class="vz-table" style="margin-top:10px;"><thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Receita</th><th>Custo</th><th>Lucro</th><th>Margem</th></tr></thead>
+        <tbody>${linhasGanhos || '<tr><td colspan="7" class="vz-empty">Sem vendas no período.</td></tr>'}</tbody></table></div>
+      </div>
+
+      <div class="vz-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="margin:0;font-size:15px;">🧺 Relatório de Compras</h3>
+          <div style="display:flex;gap:8px;">
+            <button class="vz-btn secondary" data-print="compras">🖨️ Imprimir/PDF</button>
+            <button class="vz-btn" data-export="compras">Exportar CSV</button>
+          </div>
+        </div>
+        <div class="vz-table-wrap"><table class="vz-table" style="margin-top:10px;"><thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Preço unit.</th><th>Total</th><th>Fornecedor</th></tr></thead>
+        <tbody>${linhasCompras || '<tr><td colspan="6" class="vz-empty">Sem compras no período.</td></tr>'}</tbody></table></div>
+      </div>
+
+      <div class="vz-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="margin:0;font-size:15px;">🗑️ Relatório de Perdas</h3>
+          <div style="display:flex;gap:8px;">
+            <button class="vz-btn secondary" data-print="perdas">🖨️ Imprimir/PDF</button>
+            <button class="vz-btn" data-export="perdas">Exportar CSV</button>
+          </div>
+        </div>
+        <div class="vz-table-wrap"><table class="vz-table" style="margin-top:10px;"><thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Motivo</th><th>Custo estimado</th></tr></thead>
+        <tbody>${linhasPerdas || '<tr><td colspan="5" class="vz-empty">Sem perdas no período.</td></tr>'}</tbody></table></div>
+      </div>`;
+  }
+
+  function renderBackup(){
+    const totalRegistros = DATA.compras.length + DATA.vendas.length + DATA.perdas.length + DATA.produtos.length + DATA.pedidos.length + DATA.caixaManual.length;
+
+    let autoSecao;
+    if(!AUTO_BACKUP_SUPORTADO){
+      autoSecao = `<p style="font-size:13px;color:#666;">⚠️ Esse navegador/aparelho não tem suporte a backup automático em arquivo (funciona no Chrome ou Edge do computador). Use o backup manual abaixo normalmente.</p>`;
+    } else if(autoBackupStatus === 'ativo'){
+      autoSecao = `
+        <p style="font-size:13px;"><span class="vz-badge ok">✅ Ativo</span> Salvando automaticamente a cada alteração, no arquivo escolhido.</p>
+        <button class="vz-btn secondary" id="bk-desativar-auto">Desativar backup automático</button>`;
+    } else if(autoBackupStatus === 'precisa_permissao'){
+      autoSecao = `
+        <p style="font-size:13px;"><span class="vz-badge warn">⚠️ Permissão expirada</span> O navegador precisa que você confirme de novo o acesso ao arquivo.</p>
+        <button class="vz-btn" id="bk-reativar-auto">Reativar backup automático</button>`;
+    } else {
+      autoSecao = `
+        <p style="font-size:13px;color:#666;">Escolha um arquivo (de preferência dentro da pasta do Google Drive sincronizada no seu computador) — a partir daí, toda alteração no painel é salva ali sozinha, sem precisar baixar nada manualmente.</p>
+        <button class="vz-btn" id="bk-ativar-auto">🔄 Ativar backup automático</button>`;
+    }
+
+    return `
+      <h2 class="vz-section-title">💾 Backup dos dados</h2>
+      <div class="vz-card">
+        <h3 style="margin-top:0;font-size:14px;">☁️ Google Drive</h3>
+        ${driveSection}
+        <div id="bk-drive-status" style="font-size:12px;margin-top:6px;"></div>
+      </div>
+      <div class="vz-card">
+        <h3 style="margin-top:0;font-size:14px;">Backup automático (Chrome/Edge no computador)</h3>
+        ${autoSecao}
+        <div id="bk-auto-status" style="font-size:12px;margin-top:8px;"></div>
+      </div>
+      <div class="vz-card">
+        <p style="margin-top:0;">Seus dados já ficam salvos automaticamente na nuvem, vinculados à conta usada aqui no painel — isso vale para celular e computador. Este backup é uma cópia extra.</p>
+        <p style="font-size:12px;color:#666;">Total de registros no painel hoje: <strong>${totalRegistros}</strong></p>
+        <button class="vz-btn" id="bk-exportar">⬇️ Baixar backup completo (.json)</button>
+      </div>
+      <div class="vz-card">
+        <h3 style="margin-top:0;font-size:14px;">Restaurar de um backup</h3>
+        <p style="font-size:12px;color:#666;">Use isso apenas se precisar recuperar dados de um backup anterior. <strong>Isso substitui tudo que está no painel agora.</strong></p>
+        <div class="vz-form-grid">
+          <div class="vz-field"><label>Arquivo de backup (.json)</label><input type="file" id="bk-arquivo" accept=".json"></div>
+          <div class="vz-field"><button class="vz-btn secondary" id="bk-restaurar">⬆️ Restaurar backup</button></div>
+        </div>
+        <div id="bk-status" style="font-size:12px;margin-top:8px;"></div>
+      </div>`;
+  }
+
+  function exportarCSV(tipo){
+    let header, linhas;
+    if(tipo==='ganhos'){
+      header = ['Data','Produto','Quantidade','Receita','Custo','Lucro','Margem%'];
+      linhas = DATA.vendas.filter(v=>noPeriodo(v.data)).map(v=>{
+        const custo = custoMedio(v.produto)*Number(v.quantidade);
+        const receita = Number(v.quantidade)*Number(v.preco);
+        return [v.data, v.produto, v.quantidade, receita.toFixed(2), custo.toFixed(2), (receita-custo).toFixed(2), receita>0?((receita-custo)/receita*100).toFixed(2):'0'];
+      });
+    } else if(tipo==='compras'){
+      header = ['Data','Produto','Quantidade','PrecoUnit','Total','Fornecedor'];
+      linhas = DATA.compras.filter(c=>noPeriodo(c.data)).map(c=>[c.data,c.produto,c.quantidade,c.preco,(c.quantidade*c.preco).toFixed(2),c.fornecedor||'']);
+    } else {
+      header = ['Data','Produto','Quantidade','Motivo','CustoEstimado'];
+      linhas = DATA.perdas.filter(p=>noPeriodo(p.data)).map(p=>[p.data,p.produto,p.quantidade,p.motivo,(custoMedio(p.produto)*Number(p.quantidade)).toFixed(2)]);
+    }
+    const csv = [header.join(';'), ...linhas.map(l=>l.join(';'))].join('\n');
+    const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `vizinhas_relatorio_${tipo}_${relatorioPeriodo.inicio}_a_${relatorioPeriodo.fim}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function imprimirRelatorio(tipo, btnEl){
+    const card = btnEl.closest('.vz-card');
+    const tableHTML = card.querySelector('table').outerHTML;
+    const titulo = {ganhos:'Relatório de Ganhos', compras:'Relatório de Compras', perdas:'Relatório de Perdas'}[tipo];
+    const logoSrc = document.querySelector('.vz-logo').src;
+    const periodo = `${relatorioPeriodo.inicio} a ${relatorioPeriodo.fim}`;
+    const emitido = new Date().toLocaleString('pt-BR');
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <html><head><title>${titulo} - Vizinhas foods & Drinks</title>
+      <style>
+        body{ font-family: Arial, Helvetica, sans-serif; color:#1B1B1B; padding: 30px 40px; }
+        .cab{ display:flex; align-items:center; gap:18px; border-bottom: 3px solid #0F3D2E; padding-bottom:14px; margin-bottom:18px; }
+        .cab img{ width:70px; height:70px; border-radius:50%; }
+        .cab h1{ font-size:20px; margin:0; color:#0F3D2E; }
+        .cab p{ margin:2px 0 0 0; font-size:12px; color:#555; }
+        h2{ font-size:16px; color:#C1272D; margin-bottom:2px; }
+        .periodo{ font-size:12px; color:#555; margin-bottom:16px; }
+        table{ width:100%; border-collapse: collapse; font-size:12px; }
+        th{ background:#0F3D2E; color:#fff; text-align:left; padding:6px 8px; }
+        td{ padding:6px 8px; border-bottom:1px solid #ddd; }
+        tr:nth-child(even) td{ background:#FBF3E3; }
+        .vz-del{ display:none; }
+        .rodape{ margin-top:24px; font-size:10px; color:#999; text-align:right; }
+        @media print { .no-print{ display:none; } }
+      </style></head>
+      <body>
+        <div class="cab">
+          <img src="${logoSrc}" alt="logo">
+          <div><h1>Vizinhas foods &amp; Drinks</h1><p>Gestão &amp; Controladoria</p></div>
+        </div>
+        <h2>${titulo}</h2>
+        <div class="periodo">Período: ${periodo}</div>
+        ${tableHTML}
+        <div class="rodape">Emitido em ${emitido}</div>
+      </body></html>
+    `);
+    win.document.close();
+    win.focus();
+    setTimeout(()=>{ win.print(); }, 350);
+  }
+
+  const RENDERERS = { dashboard:renderDashboard, produtos:renderProdutos, compras:renderCompras, vendas:renderVendas, pedidos:renderPedidos, perdas:renderPerdas, caixa:renderCaixa, relatorios:renderRelatorios, backup:renderBackup };
+
+  async function renderTab(tab){
+    $main.innerHTML = RENDERERS[tab]();
+    attachHandlers(tab);
+  }
+
+  function attachHandlers(tab){
+    if(tab==='backup'){
+      // Handlers Drive
+      const btnConectar = document.getElementById('bk-drive-conectar');
+      if(btnConectar) btnConectar.onclick = ()=> driveSignIn();
+      const btnSync = document.getElementById('bk-drive-sync');
+      if(btnSync) btnSync.onclick = async ()=>{ await driveSyncNow(); };
+      const btnSair = document.getElementById('bk-drive-sair');
+      if(btnSair) btnSair.onclick = ()=> driveSignOut();
+
+      const btnAtivar = document.getElementById('bk-ativar-auto');
+      if(btnAtivar){
+        btnAtivar.onclick = async ()=>{
+          const r = await ativarBackupAutomatico();
+          const statusEl = document.getElementById('bk-auto-status');
+          if(!r.ok && r.msg){ statusEl.textContent = r.msg; statusEl.style.color = 'var(--tomate)'; }
+          renderTab('backup');
+        };
+      }
+      const btnReativar = document.getElementById('bk-reativar-auto');
+      if(btnReativar){
+        btnReativar.onclick = async ()=>{
+          const r = await reativarPermissao();
+          const statusEl = document.getElementById('bk-auto-status');
+          if(!r.ok && r.msg){ statusEl.textContent = r.msg; statusEl.style.color = 'var(--tomate)'; }
+          renderTab('backup');
+        };
+      }
+      const btnDesativar = document.getElementById('bk-desativar-auto');
+      if(btnDesativar){
+        btnDesativar.onclick = async ()=>{
+          await desativarBackupAutomatico();
+          renderTab('backup');
+        };
+      }
+      document.getElementById('bk-exportar').onclick = ()=>{
+        const blob = new Blob([JSON.stringify(DATA, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dataStr = todayStr();
+        a.href = url; a.download = `vizinhas_backup_${dataStr}.json`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+      document.getElementById('bk-restaurar').onclick = ()=>{
+        const input = document.getElementById('bk-arquivo');
+        const statusEl = document.getElementById('bk-status');
+        const file = input.files && input.files[0];
+        if(!file){ statusEl.textContent = 'Escolha um arquivo de backup primeiro.'; statusEl.style.color = 'var(--tomate)'; return; }
+        const confirmar = confirm('Isso vai substituir todos os dados atuais do painel pelo conteúdo do backup. Tem certeza?');
+        if(!confirmar) return;
+        const reader = new FileReader();
+        reader.onload = async (e)=>{
+          try{
+            const novo = JSON.parse(e.target.result);
+            DATA = {
+              compras: novo.compras||[], vendas: novo.vendas||[], perdas: novo.perdas||[],
+              caixaManual: novo.caixaManual||[], produtos: novo.produtos||[], pedidos: novo.pedidos||[]
+            };
+            await save();
+            statusEl.textContent = '✅ Backup restaurado com sucesso!';
+            statusEl.style.color = '#1F6B2C';
+            renderTab('backup');
+          }catch(err){
+            statusEl.textContent = '❌ Arquivo inválido. Confira se é um backup gerado por este painel.';
+            statusEl.style.color = 'var(--tomate)';
+          }
+        };
+        reader.readAsText(file);
+      };
+    }
+    if(tab==='produtos'){
+      document.getElementById('pr-add').onclick = async ()=>{
+        const nome = document.getElementById('pr-nome').value.trim();
+        if(!nome) return;
+        DATA.produtos.push({
+          id:uid(), nome,
+          categoria: document.getElementById('pr-categoria').value,
+          unidade: document.getElementById('pr-unidade').value,
+          preco_compra: document.getElementById('pr-preco-compra').value,
+          preco_venda: document.getElementById('pr-preco-venda').value,
+          estoque_minimo: document.getElementById('pr-estoque-min').value
+        });
+        await save(); renderTab('produtos');
+      };
+    }
+    if(tab==='relatorios'){
+      document.getElementById('r-filtrar').onclick = ()=>{
+        relatorioPeriodo = { inicio: document.getElementById('r-inicio').value, fim: document.getElementById('r-fim').value };
+        renderTab('relatorios');
+      };
+      $main.querySelectorAll('[data-export]').forEach(btn=>{
+        btn.onclick = ()=> exportarCSV(btn.getAttribute('data-export'));
+      });
+      $main.querySelectorAll('[data-print]').forEach(btn=>{
+        btn.onclick = ()=> imprimirRelatorio(btn.getAttribute('data-print'), btn);
+      });
+    }
+    if(tab==='pedidos'){
+      const syncHeader = ()=>{
+        pedidoEmEdicao.data = document.getElementById('ped-data').value;
+        pedidoEmEdicao.cliente = document.getElementById('ped-cliente').value.trim();
+        pedidoEmEdicao.telefone = document.getElementById('ped-telefone').value.trim();
+        pedidoEmEdicao.endereco = document.getElementById('ped-endereco').value.trim();
+        pedidoEmEdicao.forma_pagamento = document.getElementById('ped-pagamento').value;
+        pedidoEmEdicao.status = document.getElementById('ped-status').value;
+      };
+      document.getElementById('ped-item-produto').addEventListener('change', (e)=>{
+        const prod = DATA.produtos.find(p=>p.nome.toLowerCase()===e.target.value.trim().toLowerCase());
+        if(prod && prod.preco_venda){ document.getElementById('ped-item-preco').value = prod.preco_venda; }
+      });
+      document.getElementById('ped-item-add').onclick = ()=>{
+        syncHeader();
+        const produto = document.getElementById('ped-item-produto').value.trim();
+        const quantidade = Number(document.getElementById('ped-item-qtd').value);
+        const preco = Number(document.getElementById('ped-item-preco').value);
+        if(!produto || !quantidade || !preco) return;
+        pedidoEmEdicao.itens.push({produto, quantidade, preco});
+        renderTab('pedidos');
+      };
+      $main.querySelectorAll('[data-rm-item]').forEach(el=>{
+        el.onclick = ()=>{
+          syncHeader();
+          const idx = Number(el.getAttribute('data-rm-item'));
+          pedidoEmEdicao.itens.splice(idx,1);
+          renderTab('pedidos');
+        };
+      });
+      const btnSalvar = document.getElementById('ped-salvar');
+      if(btnSalvar){
+        btnSalvar.onclick = async ()=>{
+          syncHeader();
+          const pedidoId = uid();
+          const vendaIds = [];
+          pedidoEmEdicao.itens.forEach(it=>{
+            const vId = uid();
+            vendaIds.push(vId);
+            DATA.vendas.push({
+              id: vId, data: pedidoEmEdicao.data, produto: it.produto,
+              quantidade: it.quantidade, preco: it.preco,
+              forma_pagamento: pedidoEmEdicao.forma_pagamento,
+              cliente: pedidoEmEdicao.cliente, telefone: pedidoEmEdicao.telefone,
+              endereco: pedidoEmEdicao.endereco, pedido_id: pedidoId
+            });
+          });
+          DATA.pedidos.push({
+            id: pedidoId, data: pedidoEmEdicao.data, cliente: pedidoEmEdicao.cliente,
+            telefone: pedidoEmEdicao.telefone, endereco: pedidoEmEdicao.endereco,
+            forma_pagamento: pedidoEmEdicao.forma_pagamento, status: pedidoEmEdicao.status,
+            itens: pedidoEmEdicao.itens, vendaIds
+          });
+          pedidoEmEdicao = { itens: [] };
+          await save();
+          renderTab('pedidos');
+        };
+      }
+      $main.querySelectorAll('[data-del-pedido]').forEach(el=>{
+        el.onclick = async ()=>{
+          const id = el.getAttribute('data-del-pedido');
+          const ped = DATA.pedidos.find(p=>p.id===id);
+          if(ped && ped.vendaIds){ DATA.vendas = DATA.vendas.filter(v=>!ped.vendaIds.includes(v.id)); }
+          DATA.pedidos = DATA.pedidos.filter(p=>p.id!==id);
+          await save();
+          renderTab('pedidos');
+        };
+      });
+    }
+    if(tab==='compras'){
+      document.getElementById('c-produto').addEventListener('change', (e)=>{
+        const prod = DATA.produtos.find(p=>p.nome.toLowerCase()===e.target.value.trim().toLowerCase());
+        if(prod && prod.preco_compra){ document.getElementById('c-preco').value = prod.preco_compra; }
+      });
+      document.getElementById('c-add').onclick = async ()=>{
+        const produto = document.getElementById('c-produto').value.trim();
+        const quantidade = Number(document.getElementById('c-qtd').value);
+        const preco = Number(document.getElementById('c-preco').value);
+        if(!produto || !quantidade || !preco) return;
+        DATA.compras.push({id:uid(), data:document.getElementById('c-data').value, produto, quantidade, preco, fornecedor:document.getElementById('c-fornecedor').value.trim()});
+        await save(); renderTab('compras');
+      };
+    }
+    if(tab==='vendas'){
+      document.getElementById('v-produto').addEventListener('change', (e)=>{
+        const prod = DATA.produtos.find(p=>p.nome.toLowerCase()===e.target.value.trim().toLowerCase());
+        if(prod && prod.preco_venda){ document.getElementById('v-preco').value = prod.preco_venda; }
+      });
+      document.getElementById('v-add').onclick = async ()=>{
+        const produto = document.getElementById('v-produto').value.trim();
+        const quantidade = Number(document.getElementById('v-qtd').value);
+        const preco = Number(document.getElementById('v-preco').value);
+        if(!produto || !quantidade || !preco) return;
+        DATA.vendas.push({
+          id:uid(), data:document.getElementById('v-data').value, produto, quantidade, preco,
+          forma_pagamento: document.getElementById('v-pagamento').value,
+          cliente: document.getElementById('v-cliente').value.trim(),
+          telefone: document.getElementById('v-telefone').value.trim(),
+          endereco: document.getElementById('v-endereco').value.trim()
+        });
+        await save(); renderTab('vendas');
+      };
+    }
+    if(tab==='perdas'){
+      document.getElementById('p-add').onclick = async ()=>{
+        const produto = document.getElementById('p-produto').value.trim();
+        const quantidade = Number(document.getElementById('p-qtd').value);
+        if(!produto || !quantidade) return;
+        DATA.perdas.push({id:uid(), data:document.getElementById('p-data').value, produto, quantidade, motivo:document.getElementById('p-motivo').value});
+        await save(); renderTab('perdas');
+      };
+    }
+    if(tab==='caixa'){
+      document.getElementById('m-add').onclick = async ()=>{
+        const valor = Number(document.getElementById('m-valor').value);
+        const origem = document.getElementById('m-origem').value.trim();
+        if(!valor || !origem) return;
+        DATA.caixaManual.push({id:uid(), data:document.getElementById('m-data').value, tipo:document.getElementById('m-tipo').value, origem, valor});
+        await save(); renderTab('caixa');
+      };
+    }
+    $main.querySelectorAll('[data-del]').forEach(el=>{
+      el.onclick = async ()=>{
+        const key = el.getAttribute('data-del');
+        const id = el.getAttribute('data-id');
+        DATA[key] = DATA[key].filter(x=>x.id!==id);
+        await save(); renderTab(tab);
+      };
+    });
+  }
+
+  document.querySelectorAll('.vz-nav-item').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      document.querySelectorAll('.vz-nav-item').forEach(n=>n.classList.remove('active'));
+      el.classList.add('active');
+      renderTab(el.getAttribute('data-tab'));
+    });
+  });
+
+  (async ()=>{
+    await load();
+    await inicializarAutoBackup();
+    renderTab('dashboard');
+  })();
+})();
+</script>
+</body>
+</html>
